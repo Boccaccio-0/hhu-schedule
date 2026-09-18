@@ -10,6 +10,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+# Windows 默认控制台是 GBK，这里做一次兜底，避免个别字符导致脚本崩溃
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -137,10 +141,10 @@ def main() -> int:
     for test in tests:
         try:
             test()
-            print(f"  ✓ {test.__name__}")
+            print(f"  [OK] {test.__name__}")
         except AssertionError as exc:
             failures += 1
-            print(f"  ✗ {test.__name__}: {exc}")
+            print(f"  [FAIL] {test.__name__}: {exc}")
     print(f"解析测试：{len(tests) - failures}/{len(tests)} 通过")
     return 1 if failures else 0
 

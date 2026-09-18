@@ -27,6 +27,10 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+# Windows 默认控制台是 GBK，避免输出里的特殊字符导致脚本崩溃
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+
 from hhu import auth, crypto, parse  # noqa: E402
 
 CHINA_TZ = dt.timezone(dt.timedelta(hours=8))

@@ -8,6 +8,9 @@ import json
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -76,10 +79,10 @@ def main() -> int:
     for test in tests:
         try:
             test()
-            print(f"  ✓ {test.__name__}")
+            print(f"  [OK] {test.__name__}")
         except AssertionError as exc:
             failures += 1
-            print(f"  ✗ {test.__name__}: {exc}")
+            print(f"  [FAIL] {test.__name__}: {exc}")
     print(f"加密测试：{len(tests) - failures}/{len(tests)} 通过")
     return 1 if failures else 0
 
