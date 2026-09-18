@@ -24,3 +24,41 @@ jobs:
         run: curl -sS -o /dev/null -w "hhu.edu.cn status=%{http_code} time=%{time_total}\n" --max-time 25 https://www.hhu.edu.cn/ || echo "hhu 官网失败"
       - name: 对照组 · 国内站点
         run: curl -sS -o /dev/null -w "baidu status=%{http_code} time=%{time_total}\n" --max-time 25 https://www.baidu.com || echo "baidu 失败"
+      - name: 教务系统 · 各种客户端对照
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+          echo "--- curl 默认 ---"
+          curl -sS -o /dev/null -w "  status=%{http_code}\n" --max-time 20 https://jwxt.hhu.edu.cn/jsxsd/sso.jsp || true
+          echo "--- curl + 浏览器 UA ---"
+          curl -sS -o /dev/null -w "  status=%{http_code}\n" -A "$UA" --max-time 20 https://jwxt.hhu.edu.cn/jsxsd/sso.jsp || true
+          echo "--- curl + 浏览器 UA + 常见头 ---"
+          curl -sS -o /dev/null -w "  status=%{http_code}\n" -A "$UA" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Language: zh-CN,zh;q=0.9" --max-time 20 https://jwxt.hhu.edu.cn/jsxsd/sso.jsp || true
+          echo "--- curl + HTTP/2 ---"
+          curl -sS --http2 -o /dev/null -w "  status=%{http_code}\n" --max-time 20 https://jwxt.hhu.edu.cn/jsxsd/sso.jsp || true
+      - name: Python 客户端对照
+        run: |
+          pip install --quiet curl_cffi requests
+          python - <<'PY'
+          import warnings
+          warnings.filterwarnings("ignore")
+          url = "https://jwxt.hhu.edu.cn/jsxsd/sso.jsp"
+          login = "https://authserver.hhu.edu.cn/authserver/login"
+          try:
+              import requests
+              for name, u in [("requests/jwxt", url), ("requests/auth", login)]:
+                  try:
+                      r = requests.get(u, timeout=20, verify=False)
+                      print(f"  {name}: {r.status_code}")
+                  except Exception as e:
+                      print(f"  {name}: 失败 {type(e).__name__} {str(e)[:60]}")
+          except Exception as e:
+              print("  requests 不可用", e)
+          from curl_cffi import requests as cr
+          for imp in ["chrome", None]:
+              for name, u in [(f"curl_cffi({imp})/jwxt", url), (f"curl_cffi({imp})/auth", login)]:
+                  try:
+                      r = cr.get(u, impersonate=imp, timeout=20, verify=False)
+                      print(f"  {name}: {r.status_code}")
+                  except Exception as e:
+                      print(f"  {name}: 失败 {type(e).__name__} {str(e)[:70]}")
+          PY
