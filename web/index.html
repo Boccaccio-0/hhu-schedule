@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="description" content="河海大学课表：打开就是本周课表，支持离线使用">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+<title>我的课表</title>
+</head>
+<body>
+
+<header class="topbar" id="topbar" hidden>
+  <button class="icon-btn" id="btn-prev" type="button" aria-label="上一周">‹</button>
+  <button class="week-btn" id="btn-week" type="button">
+    <span id="week-title">第 1 周</span>
+    <span class="week-dates" id="week-dates"></span>
+  </button>
+  <button class="icon-btn" id="btn-next" type="button" aria-label="下一周">›</button>
+  <button class="icon-btn" id="btn-settings" type="button" aria-label="设置">⚙</button>
+</header>
+
+<main>
+  <section class="gate" id="gate" hidden>
+    <div class="gate-card">
+      <div class="logo" aria-hidden="true">课表</div>
+      <h1>我的课表</h1>
+      <p class="gate-desc">输入同步口令解锁课表。口令只保存在这台手机上，用于解密从 GitHub 拉取的课表数据。</p>
+      <form id="gate-form" autocomplete="off">
+        <input type="password" id="gate-input" placeholder="同步口令" autocomplete="current-password" required>
+        <button type="submit" id="gate-submit">解锁</button>
+      </form>
+      <p class="gate-hint" id="gate-hint"></p>
+      <p class="gate-status" id="gate-status"></p>
+    </div>
+  </section>
+
+  <section id="timetable-view" hidden>
+    <div class="grid-wrap">
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="other-courses" id="other-courses" hidden></div>
+    <div class="footer-note" id="footer-note"></div>
+  </section>
+</main>
+
+<div class="sheet-backdrop" id="backdrop" hidden></div>
+
+<section class="sheet" id="sheet-detail" hidden>
+  <div class="sheet-head">
+    <span id="detail-title">课程详情</span>
+    <button class="icon-btn" type="button" data-close>✕</button>
+  </div>
+  <div class="sheet-body" id="detail-body"></div>
+</section>
+
+<section class="sheet" id="sheet-weeks" hidden>
+  <div class="sheet-head">
+    <span>选择周次</span>
+    <button class="icon-btn" type="button" data-close>✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="week-picker" id="week-picker"></div>
+  </div>
+</section>
+
+<section class="sheet" id="sheet-settings" hidden>
+  <div class="sheet-head">
+    <span>设置</span>
+    <button class="icon-btn" type="button" data-close>✕</button>
+  </div>
+  <div class="sheet-body">
+    <dl class="kv">
+      <dt>学期</dt><dd id="set-term">-</dd>
+      <dt>数据更新于</dt><dd id="set-updated">-</dd>
+      <dt>第 1 周起始</dt><dd id="set-start">-</dd>
+    </dl>
+    <div class="btn-row">
+      <button type="button" class="btn" id="btn-refresh">立即同步</button>
+      <button type="button" class="btn" id="btn-change-pass">重新输入口令</button>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn ghost" id="btn-start-back">起始前移一周</button>
+      <button type="button" class="btn ghost" id="btn-start-fwd">起始后移一周</button>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn ghost" id="btn-start-reset">恢复自动日期</button>
+      <button type="button" class="btn danger" id="btn-clear">清除本机数据</button>
+    </div>
+    <p class="note">
+      安装到桌面：用 Chrome 打开本页 → 右上角菜单 → 「安装应用 / 添加到主屏幕」，之后可离线打开。
+      「起始日期」只影响「现在是第几周」的计算，可从教务系统校历核对。
+    </p>
+    <p class="note" id="set-build"></p>
+  </div>
+</section>
+
+<div class="toast" id="toast" hidden></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

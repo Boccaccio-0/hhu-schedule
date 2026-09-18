@@ -1,0 +1,5 @@
+# 统一换行符，避免 Windows 提交时反复出现 CRLF 差异
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.html text

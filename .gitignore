@@ -1,0 +1,15 @@
+# 本地凭据：绝不提交
+scripts/local_secrets.json
+
+# 明文课表与调试产物
+build/
+*.plain.json
+web/data/*.plain.json
+# 例外：测试与本地预览用的演示数据（内容完全虚构）
+!tests/fixtures/sample.plain.json
+
+__pycache__/
+*.pyc
+
+.DS_Store
+Thumbs.db

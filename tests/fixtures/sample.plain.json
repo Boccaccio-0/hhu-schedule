@@ -1,0 +1,613 @@
+{
+  "version": 1,
+  "term": "2026-2027-1",
+  "termName": "2026-2027 学年 第 1 学期",
+  "startDate": "2026-09-07",
+  "totalWeeks": 20,
+  "weeks": [
+    {
+      "week": 1,
+      "start": "2026-09-07",
+      "end": "2026-09-13"
+    },
+    {
+      "week": 2,
+      "start": "2026-09-14",
+      "end": "2026-09-20"
+    },
+    {
+      "week": 3,
+      "start": "2026-09-21",
+      "end": "2026-09-27"
+    },
+    {
+      "week": 4,
+      "start": "2026-09-28",
+      "end": "2026-10-04"
+    },
+    {
+      "week": 5,
+      "start": "2026-10-05",
+      "end": "2026-10-11"
+    },
+    {
+      "week": 6,
+      "start": "2026-10-12",
+      "end": "2026-10-18"
+    },
+    {
+      "week": 7,
+      "start": "2026-10-19",
+      "end": "2026-10-25"
+    },
+    {
+      "week": 8,
+      "start": "2026-10-26",
+      "end": "2026-11-01"
+    },
+    {
+      "week": 9,
+      "start": "2026-11-02",
+      "end": "2026-11-08"
+    },
+    {
+      "week": 10,
+      "start": "2026-11-09",
+      "end": "2026-11-15"
+    },
+    {
+      "week": 11,
+      "start": "2026-11-16",
+      "end": "2026-11-22"
+    },
+    {
+      "week": 12,
+      "start": "2026-11-23",
+      "end": "2026-11-29"
+    },
+    {
+      "week": 13,
+      "start": "2026-11-30",
+      "end": "2026-12-06"
+    },
+    {
+      "week": 14,
+      "start": "2026-12-07",
+      "end": "2026-12-13"
+    },
+    {
+      "week": 15,
+      "start": "2026-12-14",
+      "end": "2026-12-20"
+    },
+    {
+      "week": 16,
+      "start": "2026-12-21",
+      "end": "2026-12-27"
+    },
+    {
+      "week": 17,
+      "start": "2026-12-28",
+      "end": "2027-01-03"
+    },
+    {
+      "week": 18,
+      "start": "2027-01-04",
+      "end": "2027-01-10"
+    },
+    {
+      "week": 19,
+      "start": "2027-01-11",
+      "end": "2027-01-17"
+    },
+    {
+      "week": 20,
+      "start": "2027-01-18",
+      "end": "2027-01-24"
+    }
+  ],
+  "fetchedAt": "2026-09-18T12:00:00+08:00",
+  "periods": [
+    {
+      "index": 1,
+      "name": "第一大节",
+      "sections": [
+        1,
+        2
+      ],
+      "start": "08:00",
+      "end": "09:35",
+      "time": "08:00-09:35"
+    },
+    {
+      "index": 2,
+      "name": "第二大节",
+      "sections": [
+        3,
+        4,
+        5
+      ],
+      "start": "09:50",
+      "end": "12:15",
+      "time": "09:50-12:15"
+    },
+    {
+      "index": 3,
+      "name": "第三大节",
+      "sections": [
+        6,
+        7
+      ],
+      "start": "14:00",
+      "end": "15:35",
+      "time": "14:00-15:35"
+    },
+    {
+      "index": 4,
+      "name": "第四大节",
+      "sections": [
+        8,
+        9
+      ],
+      "start": "15:50",
+      "end": "17:25",
+      "time": "15:50-17:25"
+    },
+    {
+      "index": 5,
+      "name": "第五大节",
+      "sections": [
+        10,
+        11,
+        12
+      ],
+      "start": "18:30",
+      "end": "20:55",
+      "time": "18:30-20:55"
+    }
+  ],
+  "courses": [
+    {
+      "name": "方法课程丁",
+      "teacher": "教师子",
+      "room": "一号楼101",
+      "note": "",
+      "day": 1,
+      "bigPeriod": 3,
+      "sections": [
+        6,
+        7
+      ],
+      "weeks": [
+        [
+          2,
+          9
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "2-9(周)[6-7节]",
+      "id": "c220131aa2dd"
+    },
+    {
+      "name": "实践课程甲",
+      "teacher": "教师甲,教师乙,教师丙,教师丁,教师戊,教师己,教师庚,教师辛,教师壬",
+      "room": "一号楼101",
+      "note": "",
+      "day": 2,
+      "bigPeriod": 2,
+      "sections": [
+        3,
+        4
+      ],
+      "weeks": [
+        [
+          10,
+          17
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "10-17(周)[3-4节]",
+      "id": "943630a497c2"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 3,
+      "bigPeriod": 3,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          1,
+          10
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "1-10(周)[6-7-8节]",
+      "id": "43609e0262bb"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 3,
+      "bigPeriod": 3,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          15,
+          17
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "15-17(周)[6-7-8节]",
+      "id": "984423843947"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 3,
+      "bigPeriod": 3,
+      "sections": [
+        6,
+        7
+      ],
+      "weeks": [
+        [
+          18,
+          18
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "18(周)[6-7节]",
+      "id": "7c9e4e0eb16a"
+    },
+    {
+      "name": "方法课程丁",
+      "teacher": "教师子",
+      "room": "一号楼101",
+      "note": "",
+      "day": 3,
+      "bigPeriod": 3,
+      "sections": [
+        6,
+        7
+      ],
+      "weeks": [
+        [
+          2,
+          9
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "2-9(周)[6-7节]",
+      "id": "a64dbf6cb610"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 3,
+      "bigPeriod": 4,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          1,
+          10
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "1-10(周)[6-7-8节]",
+      "id": "2cb7cba8e8e6"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 3,
+      "bigPeriod": 4,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          15,
+          17
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "15-17(周)[6-7-8节]",
+      "id": "caa77ddfa26d"
+    },
+    {
+      "name": "实践课程甲",
+      "teacher": "教师甲,教师乙,教师丙,教师丁,教师戊,教师己,教师庚,教师辛,教师壬",
+      "room": "一号楼101",
+      "note": "",
+      "day": 4,
+      "bigPeriod": 1,
+      "sections": [
+        1,
+        2
+      ],
+      "weeks": [
+        [
+          10,
+          17
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "10-17(周)[1-2节]",
+      "id": "67ae9911ff45"
+    },
+    {
+      "name": "政策课程己",
+      "teacher": "教师丑",
+      "room": "三号楼305",
+      "note": "100000000",
+      "day": 4,
+      "bigPeriod": 4,
+      "sections": [
+        8,
+        9
+      ],
+      "weeks": [
+        [
+          3,
+          6
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "3-6(周)[8-9节]",
+      "id": "89d181202c8a"
+    },
+    {
+      "name": "统计课程乙",
+      "teacher": "教师癸",
+      "room": "二号楼202",
+      "note": "",
+      "day": 5,
+      "bigPeriod": 2,
+      "sections": [
+        3,
+        4,
+        5
+      ],
+      "weeks": [
+        [
+          2,
+          11
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "2-11(周)[3-4-5节]",
+      "id": "aec9d07776b3"
+    },
+    {
+      "name": "统计课程乙",
+      "teacher": "教师癸",
+      "room": "二号楼202",
+      "note": "",
+      "day": 5,
+      "bigPeriod": 2,
+      "sections": [
+        3,
+        4
+      ],
+      "weeks": [
+        [
+          12,
+          12
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "12(周)[3-4节]",
+      "id": "dcd0d6223dc5"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 5,
+      "bigPeriod": 3,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          1,
+          10
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "1-10(周)[6-7-8节]",
+      "id": "9dbeaa9ae0f2"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 5,
+      "bigPeriod": 3,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          15,
+          17
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "15-17(周)[6-7-8节]",
+      "id": "5880373e5323"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 5,
+      "bigPeriod": 4,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          1,
+          10
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "1-10(周)[6-7-8节]",
+      "id": "0da26449e1f8"
+    },
+    {
+      "name": "分析课程戊",
+      "teacher": "教师卯",
+      "room": "四号楼404",
+      "note": "QQ群：100000000 进群密码：000000",
+      "day": 5,
+      "bigPeriod": 4,
+      "sections": [
+        6,
+        7,
+        8
+      ],
+      "weeks": [
+        [
+          15,
+          17
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "15-17(周)[6-7-8节]",
+      "id": "17e9aa15705c"
+    },
+    {
+      "name": "英语课程丙",
+      "teacher": "教师寅",
+      "room": "三号楼303",
+      "note": "QQ 1000000000",
+      "day": 6,
+      "bigPeriod": 2,
+      "sections": [
+        3,
+        4,
+        5
+      ],
+      "weeks": [
+        [
+          1,
+          2
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "1-2(周)[3-4-5节]",
+      "id": "9212d95729c3"
+    },
+    {
+      "name": "英语课程丙",
+      "teacher": "教师寅",
+      "room": "三号楼303",
+      "note": "QQ 1000000000",
+      "day": 6,
+      "bigPeriod": 2,
+      "sections": [
+        3,
+        4,
+        5
+      ],
+      "weeks": [
+        [
+          6,
+          12
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "6-12(周)[3-4-5节]",
+      "id": "e6dfa6af7d71"
+    },
+    {
+      "name": "英语课程丙",
+      "teacher": "教师寅",
+      "room": "三号楼303",
+      "note": "QQ 1000000000",
+      "day": 7,
+      "bigPeriod": 2,
+      "sections": [
+        3,
+        4,
+        5
+      ],
+      "weeks": [
+        [
+          1,
+          1
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "1(周)[3-4-5节]",
+      "id": "5d06534b3f73"
+    },
+    {
+      "name": "英语课程丙",
+      "teacher": "教师寅",
+      "room": "三号楼303",
+      "note": "QQ 1000000000",
+      "day": 7,
+      "bigPeriod": 2,
+      "sections": [
+        3,
+        4
+      ],
+      "weeks": [
+        [
+          5,
+          5
+        ]
+      ],
+      "parity": null,
+      "weeksRaw": "5(周)[3-4节]",
+      "id": "f59abfd0e2b8"
+    }
+  ],
+  "otherCourses": [
+    {
+      "name": "实习课程庚",
+      "teacher": "教师辰",
+      "className": "班级甲,班级乙",
+      "courseCode": "1001436",
+      "kind": "实践课程",
+      "attribute": "必修"
+    }
+  ]
+}
