@@ -60,8 +60,8 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-16"?>
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>cmd.exe</Command>
-      <Arguments>/c "{bat}" --auto</Arguments>
+      <Command>{python}</Command>
+      <Arguments>"{script}" --auto</Arguments>
       <WorkingDirectory>{workdir}</WorkingDirectory>
     </Exec>
   </Actions>
@@ -74,6 +74,7 @@ def main() -> int:
     if not bat.is_file():
         print(f"找不到 {bat}")
         return 1
+    script = ROOT / "scripts" / "local_update.py"
     if not (ROOT / "scripts" / "local_secrets.json").is_file():
         print("请先创建 scripts/local_secrets.json（见 README），再安装计划任务。")
         return 1
@@ -81,7 +82,8 @@ def main() -> int:
     import datetime as dt
 
     start = dt.datetime.now().strftime("%Y-%m-%dT") + RUN_TIME + ":00"
-    xml = TEMPLATE.format(start=start, bat=bat, workdir=ROOT)
+    # 用 python.exe 的绝对路径，避免计划任务环境里 PATH 找不到 python
+    xml = TEMPLATE.format(start=start, python=sys.executable, script=script, workdir=ROOT)
 
     with tempfile.NamedTemporaryFile("w", suffix=".xml", delete=False, encoding="utf-16") as handle:
         handle.write(xml)

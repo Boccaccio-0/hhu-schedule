@@ -1,5 +1,6 @@
 # 本地凭据：绝不提交
 scripts/local_secrets.json
+scripts/sync.log
 
 # 明文课表与调试产物
 build/

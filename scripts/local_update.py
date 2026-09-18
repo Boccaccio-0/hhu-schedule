@@ -30,10 +30,23 @@ from hhu import auth, crypto, parse  # noqa: E402
 
 SECRETS_FILE = ROOT / "scripts" / "local_secrets.json"
 OUT_FILE = ROOT / "web" / "data" / "schedule.enc.json"
+LOG_FILE = ROOT / "scripts" / "sync.log"
+LOG_TO_FILE = False
 
 
 def log(message: str) -> None:
     print(message, flush=True)
+    if not LOG_TO_FILE:
+        return
+    stamp = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        with LOG_FILE.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{stamp}] {message}\n")
+        # 日志只保留最近 200 行
+        lines = LOG_FILE.read_text(encoding="utf-8").splitlines()[-200:]
+        LOG_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except OSError:
+        pass
 
 
 def load_secrets() -> dict:
@@ -102,11 +115,13 @@ def run_git(args: list[str], retries: int = 4) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
+    global LOG_TO_FILE
     parser = argparse.ArgumentParser(description="本地抓取课表并推送到 GitHub")
     parser.add_argument("--auto", action="store_true", help="计划任务模式：不输出多余内容")
     args = parser.parse_args(argv)
+    LOG_TO_FILE = args.auto
 
-    log("=== 河海课表 · 本地同步 ===")
+    log(f"=== 河海课表 · 本地同步（{dt.datetime.now():%Y-%m-%d %H:%M:%S}）===")
     secrets = load_secrets()
     payload = fetch_payload(secrets, attempts=1 if args.auto else 3)
     log(f"学期：{payload['term']}（{payload['termName']}）")
