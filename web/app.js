@@ -5,7 +5,10 @@
  * → 本页拉取 → 用 WebCrypto 解密 → 存 localStorage → 离线可用。
  */
 
-const DATA_URL = 'data/schedule.enc.json';
+// 网页版从同目录读数据；打包成 Android App 时优先从 GitHub 拉最新，失败则用包内自带的那份
+const BUNDLED_DATA_URL = 'data/schedule.enc.json';
+const REMOTE_DATA_URL = 'https://boccaccio-0.github.io/hhu-schedule/data/schedule.enc.json';
+const IS_ANDROID_APP = location.hostname === 'appassets.androidplatform.net';
 const KEY_PASS = 'hhu.pass';
 const KEY_DATA = 'hhu.data';
 const KEY_META = 'hhu.meta';
@@ -66,14 +69,26 @@ async function decryptEnvelope(envelope, passphrase) {
   return JSON.parse(new TextDecoder().decode(plaintext));
 }
 
+function dataSources() {
+  return IS_ANDROID_APP ? [REMOTE_DATA_URL, BUNDLED_DATA_URL] : [BUNDLED_DATA_URL];
+}
+
 async function fetchEnvelope() {
-  const response = await fetch(DATA_URL, { cache: 'no-store' });
-  if (!response.ok) {
-    const error = new Error(response.status === 404 ? '服务器上还没有课表数据' : `拉取数据失败：HTTP ${response.status}`);
-    error.code = response.status;
-    throw error;
+  let lastError = null;
+  for (const url of dataSources()) {
+    try {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) {
+        const error = new Error(response.status === 404 ? '服务器上还没有课表数据' : `拉取数据失败：HTTP ${response.status}`);
+        error.code = response.status;
+        throw error;
+      }
+      return await response.json();
+    } catch (error) {
+      lastError = error;  // 联网失败时自动退回下一数据源（App 内即包内自带数据）
+    }
   }
-  return response.json();
+  throw lastError || new Error('无法获取课表数据');
 }
 
 /* ------------------------------------------------------------------ 周次 */
@@ -224,7 +239,7 @@ function renderOther() {
 function renderFooter() {
   const meta = state.meta;
   const term = state.schedule.termName || state.schedule.term || '';
-  $('footer-note').textContent = [term, meta && meta.updated ? `数据更新于 ${formatTime(meta.updated)}` : '']
+  $('footer-note').textContent = [term, meta && meta.updated ? `数据更新于 ${formatTime(meta.updated)}` : '', IS_ANDROID_APP ? 'App 版' : '']
     .filter(Boolean)
     .join(' · ');
 }
@@ -457,9 +472,10 @@ function bind() {
 
 async function init() {
   bind();
-  if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator && !IS_ANDROID_APP) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* 离线能力不可用不影响使用 */ });
   }
+  if (IS_ANDROID_APP) $('install-hint').hidden = true;
 
   const cached = localStorage.getItem(KEY_DATA);
   if (cached) {

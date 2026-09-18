@@ -12,5 +12,12 @@ web/data/*.plain.json
 __pycache__/
 *.pyc
 
+# Android 构建产物与自动复制进去的网页资源
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/www/
+android/local.properties
+
 .DS_Store
 Thumbs.db

@@ -1,0 +1,64 @@
+name: 构建 Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "android/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 准备 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 准备 Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: 查看 Android SDK 环境
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
+
+      - name: 把网页资源打进 App
+        run: |
+          rm -rf android/app/src/main/assets/www
+          mkdir -p android/app/src/main/assets/www
+          cp -r web/. android/app/src/main/assets/www/
+          echo "打包进去的文件："
+          find android/app/src/main/assets/www -type f | sed 's|.*/assets/||' | sort
+
+      - name: 构建 APK
+        working-directory: android
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: 整理产物
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk hhu-schedule.apk
+          ls -lh hhu-schedule.apk
+
+      - name: 发布到 Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view apk >/dev/null 2>&1 || gh release create apk \
+            --title "课表 App（Android 安装包）" \
+            --notes "下载 hhu-schedule.apk 安装即可；安装时系统会提示允许「安装未知应用」，同意一次即可。"
+          gh release upload apk hhu-schedule.apk --clobber
+          echo "下载地址：https://github.com/${{ github.repository }}/releases/download/apk/hhu-schedule.apk"
