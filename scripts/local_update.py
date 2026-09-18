@@ -137,8 +137,11 @@ def main(argv: list[str] | None = None) -> int:
     if not run_git(["commit", "-m", f"chore: 课表数据更新 {payload['fetchedAt'][:16]}"]):
         return 1
     if not run_git(["push"]):
-        log("推送失败：数据已保存在本地，网络恢复后重新运行本脚本即可。")
-        return 1
+        log("git push 连不上 GitHub，改用 API 推送…")
+        fallback = subprocess.run([sys.executable, str(ROOT / "scripts" / "api_push.py")], cwd=ROOT)
+        if fallback.returncode != 0:
+            log("推送失败：数据已保存在本地，网络恢复后重新运行本脚本即可。")
+            return 1
     log("推送成功，GitHub Pages 会在 1 分钟左右自动更新。")
     return 0
 
