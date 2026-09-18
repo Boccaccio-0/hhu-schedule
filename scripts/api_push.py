@@ -134,11 +134,16 @@ def main(argv: list[str] | None = None) -> int:
     api(token, "PATCH", f"/repos/{owner}/{repo}/git/refs/heads/{branch}", {"sha": commit["sha"], "force": False})
     print(f"推送完成，新提交：{commit['sha'][:10]}")
 
-    # 让本地 git 与远端对齐（内容一致，只是提交号不同）
-    run_git(["fetch", args.remote, branch])
-    run_git(["update-ref", f"refs/heads/{branch}", commit["sha"]])
-    run_git(["update-ref", f"refs/remotes/{args.remote}/{branch}", commit["sha"]])
-    print("本地引用已同步到远端提交。")
+    # API 推送产生的提交对象在本地不存在，需要 fetch 回来才能对齐引用。
+    # git 端口不通时 fetch 会失败，此时本地提交号与远端不同（文件内容一致），
+    # 后续仍然走 API 推送，不影响使用。
+    if run_git(["fetch", args.remote, branch]).returncode == 0:
+        run_git(["update-ref", f"refs/heads/{branch}", commit["sha"]])
+        run_git(["update-ref", f"refs/remotes/{args.remote}/{branch}", commit["sha"]])
+        print("本地引用已与远端对齐。")
+    else:
+        print("提示：git 端口当前不通，本地提交号与远端不同（文件内容完全一致）。")
+        print("      网络恢复后跑一次 git fetch origin 即可对齐；不影响每天的自动同步。")
     return 0
 
 
