@@ -1,8 +1,21 @@
 # 河海课表 PWA
 
-打开就是一个周课表：数据从河海大学教务系统抓取后加密推送，手机上添加到主屏幕即可像 App 一样使用，没网也能看。
+打开就是一个周课表：数据从河海大学教务系统抓取后加密推送，没网也能看。
 
-线上地址：<https://boccaccio-0.github.io/hhu-schedule/>
+**两种用法**：
+
+| 方式 | 入口 | 特点 |
+| --- | --- | --- |
+| **安卓 App（推荐）** | [下载 hhu-schedule.apk](https://github.com/Boccaccio-0/hhu-schedule/releases/download/apk/hhu-schedule.apk) | 真·安装包，桌面图标、启动快、离线可用；联网时自动拉最新课表 |
+| 网页版 / PWA | <https://boccaccio-0.github.io/hhu-schedule/> | 免安装，iPhone/电脑也能用；Chrome 里可「添加到主屏幕」 |
+
+## 安装安卓 App
+
+1. 手机浏览器打开下载链接：<https://github.com/Boccaccio-0/hhu-schedule/releases/download/apk/hhu-schedule.apk>（约 0.5 MB）；
+2. 下载完成后点开安装，系统会提示「**出于安全考虑，禁止安装未知应用**」——按提示允许一次（小米/华为/OPPO/vivo 一般在弹窗里的设置页打开开关，或到「设置 → 应用 → 特殊权限 → 安装未知应用」给浏览器授权）；
+3. 装好后桌面出现「课表」图标，打开输入口令即可。
+
+**更新方式**：日常课表变化不需要重装——App 打开时会自动从网上拉最新数据，拉不到就用包内自带的那一份。只有界面/功能更新时才需要重新下载安装包覆盖安装（数据不会丢）。
 
 ## 它长什么样
 
@@ -58,7 +71,7 @@ GitHub Actions
 | 换手机 / 重装 | 用同一个口令解锁即可 |
 | 换口令 | 改 `local_secrets.json` 里的 `passphrase` → 手动同步一次 → 手机上点「重新输入口令」 |
 
-手机安装（安卓 Chrome）：打开线上地址 → 输入口令 → 右上角 ⋮ → 「安装应用 / 添加到主屏幕」。
+网页版安装到桌面（安卓 Chrome）：打开线上地址 → 输入口令 → 右上角 ⋮ → 「安装应用 / 添加到主屏幕」；iPhone 用 Safari 打开 → 分享 → 「添加到主屏幕」。
 
 ## 常见问题
 
@@ -106,6 +119,8 @@ python -m http.server 8000 --directory web
 
 ```text
 .github/workflows/deploy.yml   收到推送后部署到 GitHub Pages
+.github/workflows/android.yml  自动构建 APK 并发布到 Releases
+android/                       Android 壳工程（WebView 加载 web/ 里的页面）
 scripts/local_update.py        本机同步：抓取 → 加密 → 提交 → 推送
 scripts/local_update.bat       双击运行上面这个脚本
 scripts/api_push.py            git 端口被墙时改走 GitHub API 推送

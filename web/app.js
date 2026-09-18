@@ -69,13 +69,19 @@ async function decryptEnvelope(envelope, passphrase) {
   return JSON.parse(new TextDecoder().decode(plaintext));
 }
 
-function dataSources() {
-  return IS_ANDROID_APP ? [REMOTE_DATA_URL, BUNDLED_DATA_URL] : [BUNDLED_DATA_URL];
+/**
+ * 数据源顺序：
+ * - 网页版：只有同目录一份；
+ * - App 版：解锁时先用包内数据（秒开），后台刷新时优先拉 GitHub 上的最新数据。
+ */
+function dataSources(preferRemote = true) {
+  if (!IS_ANDROID_APP) return [BUNDLED_DATA_URL];
+  return preferRemote ? [REMOTE_DATA_URL, BUNDLED_DATA_URL] : [BUNDLED_DATA_URL, REMOTE_DATA_URL];
 }
 
-async function fetchEnvelope() {
+async function fetchEnvelope(preferRemote = true) {
   let lastError = null;
-  for (const url of dataSources()) {
+  for (const url of dataSources(preferRemote)) {
     try {
       const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) {
@@ -352,8 +358,8 @@ function persist(schedule, meta) {
   localStorage.setItem(KEY_META, JSON.stringify(meta));
 }
 
-async function unlock(passphrase, { initial = false } = {}) {
-  const envelope = await fetchEnvelope();
+/** 用已取到的密文数据解锁并落盘。 */
+async function applyEnvelope(envelope, passphrase, { initial = false } = {}) {
   const schedule = await decryptEnvelope(envelope, passphrase);
   state.pass = passphrase;
   state.schedule = schedule;
@@ -364,6 +370,11 @@ async function unlock(passphrase, { initial = false } = {}) {
   render();
 }
 
+/** 首次解锁：App 版先用包内数据，保证秒开。 */
+async function unlock(passphrase, options = {}) {
+  return applyEnvelope(await fetchEnvelope(false), passphrase, options);
+}
+
 async function refresh({ silent = false } = {}) {
   if (!state.pass) return;
   if (!navigator.onLine) {
@@ -371,14 +382,14 @@ async function refresh({ silent = false } = {}) {
     return;
   }
   try {
-    const envelope = await fetchEnvelope();
+    const envelope = await fetchEnvelope(true);  // 刷新时优先取远端最新
     if (state.schedule && state.meta && envelope.payloadHash === state.meta.payloadHash) {
       state.meta = { ...state.meta, updated: envelope.updated };
       localStorage.setItem(KEY_META, JSON.stringify(state.meta));
+      render();
     } else {
-      await unlock(state.pass);
+      await applyEnvelope(envelope, state.pass);  // 用刚取到的那份，别再退回包内旧数据
     }
-    render();
     if (!silent) toast('课表已是最新');
   } catch (error) {
     if (silent) return;
@@ -414,6 +425,7 @@ function bind() {
     try {
       await unlock(passphrase, { initial: true });
       input.value = '';
+      if (IS_ANDROID_APP) refresh({ silent: true });  // App 版：解锁后后台拉一次最新数据
     } catch (error) {
       const hint = error.code === 404
         ? '服务器上还没有课表数据：请先在 GitHub 仓库运行一次「同步课表数据」workflow。'
