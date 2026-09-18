@@ -1,0 +1,26 @@
+name: 网络诊断（临时，用完即删）
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: DNS 解析
+        run: |
+          echo "--- A 记录 ---"; getent ahostsv4 authserver.hhu.edu.cn || echo "无 A"
+          echo "--- AAAA 记录 ---"; getent ahostsv6 authserver.hhu.edu.cn || echo "无 AAAA"
+          echo "--- 全部 ---"; getent hosts authserver.hhu.edu.cn || true
+      - name: IPv4 请求
+        run: curl -4 -sS -o /dev/null -w "ipv4 status=%{http_code} time=%{time_total}\n" --max-time 25 https://authserver.hhu.edu.cn/authserver/login || echo "ipv4 失败"
+      - name: IPv6 请求
+        run: curl -6 -sS -o /dev/null -w "ipv6 status=%{http_code} time=%{time_total}\n" --max-time 25 https://authserver.hhu.edu.cn/authserver/login || echo "ipv6 失败"
+      - name: 详细握手过程
+        run: curl -sv --max-time 25 https://authserver.hhu.edu.cn/authserver/login -o /dev/null 2>&1 | tail -35 || true
+      - name: 教务系统入口
+        run: curl -sS -o /dev/null -w "jwxt status=%{http_code} time=%{time_total}\n" --max-time 25 https://jwxt.hhu.edu.cn/jsxsd/sso.jsp || echo "jwxt 失败"
+      - name: 对照组 · 学校官网
+        run: curl -sS -o /dev/null -w "hhu.edu.cn status=%{http_code} time=%{time_total}\n" --max-time 25 https://www.hhu.edu.cn/ || echo "hhu 官网失败"
+      - name: 对照组 · 国内站点
+        run: curl -sS -o /dev/null -w "baidu status=%{http_code} time=%{time_total}\n" --max-time 25 https://www.baidu.com || echo "baidu 失败"
