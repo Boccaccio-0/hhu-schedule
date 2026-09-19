@@ -287,14 +287,6 @@ function sectionsText(inst) {
   return inst.sections && inst.sections.length ? `第 ${inst.sections.join('-')} 节` : '';
 }
 
-function timeRangeOf(inst) {
-  const periods = state.schedule.periods;
-  const first = periods.find((p) => (p.sections || []).includes(inst.sections[0]));
-  const last = periods.find((p) => (p.sections || []).includes(inst.sections[inst.sections.length - 1]));
-  if (!first || !last) return '';
-  return `${first.time.split('-')[0]}-${last.time.split('-')[1]}`;
-}
-
 /** 本周要上的课：一个时段一块，跨大节的课合并成一块。 */
 function blockEl(inst, day, { conflict = false, otherWeeks = [], ghost = false } = {}) {
   const node = document.createElement('button');
@@ -473,7 +465,7 @@ function courseDetailEl(inst) {
   };
   add('教师', inst.teacher);
   add('教室', inst.room);
-  add('节次', [sectionsText(inst), timeRangeOf(inst)].filter(Boolean).join(' · '));
+  add('节次', sectionsText(inst));
   add('周次', weeksText(inst));
   add('备注', inst.note);
   box.append(dl);
