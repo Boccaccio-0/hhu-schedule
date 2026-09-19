@@ -309,7 +309,7 @@ function blockEl(inst, day, { conflict = false, otherWeeks = [], ghost = false }
   if (!ghost && otherWeeks.length) {
     node.append(el('span', 'other', `其他周：${otherWeeks.map(weeksShort).join('、')}`));
   }
-  node.addEventListener('click', () => openDetail(day, inst.firstRow));
+  node.addEventListener('click', () => openDetail(day, inst.firstRow, inst.key));
   return node;
 }
 
@@ -412,7 +412,7 @@ function closeSheets() {
   $('backdrop').hidden = true;
 }
 
-function openDetail(day, bigPeriod) {
+function openDetail(day, bigPeriod, key) {
   const period = state.schedule.periods.find((p) => p.index === bigPeriod);
   $('detail-title').textContent = `星期${WEEKDAY_SHORT[day - 1]} · ${period ? period.name : ''}`;
 
@@ -427,44 +427,71 @@ function openDetail(day, bigPeriod) {
     return;
   }
 
+  // 只显示点中的那一条安排；同时段的其他安排收进折叠区，需要时再展开
+  const current = cluster.items.find((i) => i.key === key) || cluster.items[0];
+  const others = cluster.items.filter((i) => i !== current);
   const activeCount = cluster.items.filter((inst) => isActive(inst, state.week)).length;
-  if (activeCount > 1) {
+  if (activeCount > 1 && isActive(current, state.week)) {
     body.append(el('div', 'warn', `⚠ 本周这个时段有 ${activeCount} 门课重叠，请以教务系统为准`));
   }
+  body.append(courseDetailEl(current));
 
-  for (const inst of cluster.items) {
-    const isOn = isActive(inst, state.week);
-    const box = el('div', 'course-detail');
-    const name = el('span', `name ${colorClass(inst.name)}`, inst.name);
-    if (!isOn) name.style.opacity = '.55';
-    box.append(name);
-    box.append(el('span', `badge${isOn ? ' on' : ''}`, isOn ? '本周上' : '本周不上'));
-
-    const dl = document.createElement('dl');
-    const add = (label, value) => {
-      if (!value) return;
-      dl.append(el('dt', '', label), el('dd', '', value));
-    };
-    add('教师', inst.teacher);
-    add('教室', inst.room);
-    add('节次', [sectionsText(inst), timeRangeOf(inst)].filter(Boolean).join(' · '));
-    add('周次', weeksText(inst));
-    add('备注', inst.note);
-    box.append(dl);
-
-    // 同一门课在不同周次可能换时段，这里把全学期安排列出来对照
-    const slots = courseSlots(inst.name);
-    if (slots.length > 1) {
-      box.append(el('div', 'subtitle', `《${inst.name}》全学期安排`));
-      const list = el('ul', 'slots');
-      for (const slot of slots) {
-        list.append(el('li', '', `${WEEKDAY_SHORT[slot.day - 1]} ${slot.sectionsText} · ${slot.weeksText} · ${slot.room}`));
-      }
-      box.append(list);
+  if (others.length) {
+    const fold = document.createElement('details');
+    fold.className = 'fold';
+    fold.append(el('summary', '', `同一时段另有 ${others.length} 条安排`));
+    const list = el('ul', 'slots');
+    for (const inst of others) {
+      const item = el('li', '');
+      const link = document.createElement('button');
+      link.type = 'button';
+      link.className = 'linkish';
+      link.textContent = `${inst.name} · ${sectionsText(inst)} · ${weeksShort(inst)} · ${inst.room}`;
+      link.addEventListener('click', () => openDetail(day, inst.firstRow, inst.key));
+      item.append(link);
+      list.append(item);
     }
-    body.append(box);
+    fold.append(list);
+    body.append(fold);
   }
   openSheet('sheet-detail');
+}
+
+/** 单条课程安排的详情（教师/教室/节次/周次/备注）+ 可展开的全学期安排。 */
+function courseDetailEl(inst) {
+  const isOn = isActive(inst, state.week);
+  const box = el('div', 'course-detail');
+  const name = el('span', `name ${colorClass(inst.name)}`, inst.name);
+  if (!isOn) name.style.opacity = '.55';
+  box.append(name);
+  box.append(el('span', `badge${isOn ? ' on' : ''}`, isOn ? '本周上' : '本周不上'));
+
+  const dl = document.createElement('dl');
+  const add = (label, value) => {
+    if (!value) return;
+    dl.append(el('dt', '', label), el('dd', '', value));
+  };
+  add('教师', inst.teacher);
+  add('教室', inst.room);
+  add('节次', [sectionsText(inst), timeRangeOf(inst)].filter(Boolean).join(' · '));
+  add('周次', weeksText(inst));
+  add('备注', inst.note);
+  box.append(dl);
+
+  // 同一门课在不同周次可能换时段，需要时展开对照
+  const slots = courseSlots(inst.name);
+  if (slots.length > 1) {
+    const fold = document.createElement('details');
+    fold.className = 'fold';
+    fold.append(el('summary', '', `《${inst.name}》全学期安排（${slots.length} 处）`));
+    const list = el('ul', 'slots');
+    for (const slot of slots) {
+      list.append(el('li', '', `${WEEKDAY_SHORT[slot.day - 1]} ${slot.sectionsText} · ${slot.weeksText} · ${slot.room}`));
+    }
+    fold.append(list);
+    box.append(fold);
+  }
+  return box;
 }
 
 /** 某门课在整学期的所有时段（含周次与教室），用于详情页对照。 */
