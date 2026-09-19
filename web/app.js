@@ -478,7 +478,7 @@ function courseDetailEl(inst) {
     fold.append(el('summary', '', `《${inst.name}》全学期安排（${slots.length} 处）`));
     const list = el('ul', 'slots');
     for (const slot of slots) {
-      list.append(el('li', '', `${WEEKDAY_SHORT[slot.day - 1]} ${slot.sectionsText} · ${slot.weeksText} · ${slot.room}`));
+      list.append(el('li', '', `${slot.daysText} ${slot.sectionsText} · ${slot.weeksText} · ${slot.room}`));
     }
     fold.append(list);
     box.append(fold);
@@ -486,16 +486,28 @@ function courseDetailEl(inst) {
   return box;
 }
 
-/** 某门课在整学期的所有时段（含周次与教室），用于详情页对照。 */
+/**
+ * 某门课在整学期的所有时段。
+ * 节次/周次/教室完全相同的安排（比如周三和周五同一时段）会合并成一行，
+ * 只把星期写在一起，避免看起来像重复条目。
+ */
 function courseSlots(name) {
-  const slots = [];
+  const groups = new Map();
   for (let day = 1; day <= 7; day += 1) {
     for (const inst of buildDayInstances(day)) {
       if (inst.name !== name) continue;
-      slots.push({ day, sectionsText: sectionsText(inst), weeksText: weeksText(inst), room: inst.room });
+      const key = [sectionsText(inst), weeksText(inst), inst.room].join('|');
+      let group = groups.get(key);
+      if (!group) {
+        group = { days: [], sectionsText: sectionsText(inst), weeksText: weeksText(inst), room: inst.room, order: inst.sections[0] };
+        groups.set(key, group);
+      }
+      if (!group.days.includes(day)) group.days.push(day);
     }
   }
-  return slots.sort((a, b) => a.day - b.day || a.sectionsText.localeCompare(b.sectionsText));
+  return [...groups.values()]
+    .map((group) => ({ ...group, daysText: group.days.map((d) => `周${WEEKDAY_SHORT[d - 1]}`).join('、') }))
+    .sort((a, b) => a.order - b.order || a.days[0] - b.days[0] || a.weeksText.localeCompare(b.weeksText));
 }
 
 function openWeekPicker() {
