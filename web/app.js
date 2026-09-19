@@ -198,6 +198,8 @@ function renderGrid() {
   const grid = $('grid');
   grid.innerHTML = '';
   const highlight = todayColumn();
+  const rowCount = schedule.periods.length;
+  grid.style.gridTemplateRows = `auto repeat(${rowCount}, minmax(92px, auto))`;
 
   grid.append(el('div', 'day-head'));
   for (let day = 1; day <= 7; day += 1) {
@@ -206,38 +208,143 @@ function renderGrid() {
     grid.append(head);
   }
 
+  // 背景格：决定每行高度与今日底色，课程块会盖在它们上面
   for (const period of schedule.periods) {
     const label = el('div', 'period-label');
     const sections = period.sections || [];
     const span = sections.length ? `${sections[0]}-${sections[sections.length - 1]}节` : period.name;
     label.append(el('b', '', span));
     if (period.time) label.append(el('span', '', period.time.slice(0, 5)));
+    label.style.gridRow = String(period.index + 1);
+    label.style.gridColumn = '1';
     grid.append(label);
 
     for (let day = 1; day <= 7; day += 1) {
       const cell = el('div', 'cell');
       if (day === highlight) cell.classList.add('today');
-      const courses = schedule.courses.filter((c) => c.day === day && c.bigPeriod === period.index);
-      const active = courses.filter((c) => isActive(c, state.week));
-      // 别的周才上的课只作为灰显提示，同名课程只留一条，避免格子太挤
-      const ghosts = [...new Map(courses.filter((c) => !isActive(c, state.week)).map((c) => [c.name, c])).values()];
-      const shown = active.length ? active : ghosts.slice(0, 2);
-      for (const course of shown) {
-        cell.append(chipEl(course, day, period.index, !isActive(course, state.week)));
-      }
+      cell.style.gridRow = String(period.index + 1);
+      cell.style.gridColumn = String(day + 1);
       grid.append(cell);
+    }
+  }
+
+  // 课程块：同一天里时间重叠的归成一簇，再决定并排还是堆叠
+  for (let day = 1; day <= 7; day += 1) {
+    for (const cluster of clusterInstances(buildDayInstances(day))) {
+      grid.append(clusterEl(cluster, day));
     }
   }
 }
 
-function chipEl(course, day, bigPeriod, ghost) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = `chip ${ghost ? 'ghost' : colorClass(course.name)}`;
-  button.append(el('span', 'cname', course.name));
-  if (course.room) button.append(el('span', 'room', course.room));
-  button.addEventListener('click', () => openDetail(day, bigPeriod));
-  return button;
+/** 把同一天、同一门课、同一批周次、连续或重叠小节的记录合并成一节课。 */
+function buildDayInstances(day) {
+  const byKey = new Map();
+  for (const course of state.schedule.courses) {
+    if (course.day !== day) continue;
+    const key = [course.name, course.room, (course.weeks || []).map((w) => w.join('-')).join(','), course.parity || ''].join('|');
+    let inst = byKey.get(key);
+    if (!inst) {
+      inst = {
+        key, name: course.name, room: course.room, teacher: course.teacher, note: course.note,
+        weeks: course.weeks || [], parity: course.parity || null, sections: new Set(), rows: new Set(),
+      };
+      byKey.set(key, inst);
+    }
+    (course.sections || []).forEach((s) => inst.sections.add(s));
+    inst.rows.add(course.bigPeriod);
+  }
+  return [...byKey.values()]
+    .map((inst) => {
+      const sections = [...inst.sections].sort((a, b) => a - b);
+      const rows = [...inst.rows].sort((a, b) => a - b);
+      return { ...inst, sections, firstRow: rows[0], lastRow: rows[rows.length - 1] };
+    })
+    .sort((a, b) => a.firstRow - b.firstRow || a.sections[0] - b.sections[0]);
+}
+
+/** 时间上互相重叠的课程归为一簇（用于并排或堆叠渲染）。 */
+function clusterInstances(list) {
+  const clusters = [];
+  for (const inst of [...list].sort((a, b) => a.firstRow - b.firstRow || a.lastRow - b.lastRow)) {
+    const hit = clusters.find((c) => c.lastRow >= inst.firstRow);
+    if (hit) {
+      hit.items.push(inst);
+      hit.lastRow = Math.max(hit.lastRow, inst.lastRow);
+    } else {
+      clusters.push({ items: [inst], firstRow: inst.firstRow, lastRow: inst.lastRow });
+    }
+  }
+  return clusters;
+}
+
+function weeksShort(course) {
+  if (!course.weeks || !course.weeks.length) return '';
+  const text = course.weeks.map(([a, b]) => (a === b ? String(a) : `${a}-${b}`)).join('、');
+  return `${text}周${course.parity ? ` ${course.parity}` : ''}`;
+}
+
+function sectionsText(inst) {
+  return inst.sections && inst.sections.length ? `第 ${inst.sections.join('-')} 节` : '';
+}
+
+function timeRangeOf(inst) {
+  const periods = state.schedule.periods;
+  const first = periods.find((p) => (p.sections || []).includes(inst.sections[0]));
+  const last = periods.find((p) => (p.sections || []).includes(inst.sections[inst.sections.length - 1]));
+  if (!first || !last) return '';
+  return `${first.time.split('-')[0]}-${last.time.split('-')[1]}`;
+}
+
+/** 本周要上的课：一个时段一块，跨大节的课合并成一块。 */
+function blockEl(inst, day, { conflict = false, otherWeeks = [], ghost = false } = {}) {
+  const node = document.createElement('button');
+  node.type = 'button';
+  node.className = `block ${ghost ? 'ghost' : colorClass(inst.name)}`;
+  node.style.gridColumn = String(day + 1);
+  node.style.gridRow = `${inst.firstRow + 1} / ${inst.lastRow + 2}`;
+  node.append(el('span', 'name', inst.name));
+  if (inst.room) node.append(el('span', 'room', inst.room));
+  node.append(el('span', 'weeks', weeksShort(inst)));
+  if (conflict && !ghost) node.append(el('span', 'conflict', '⚠ 时间冲突'));
+  if (!ghost && otherWeeks.length) {
+    node.append(el('span', 'other', `其他周：${otherWeeks.map(weeksShort).join('、')}`));
+  }
+  node.addEventListener('click', () => openDetail(day, inst.firstRow));
+  return node;
+}
+
+/**
+ * 渲染一个时段簇：
+ * - 本周要上的课排在上面（冲突时上下堆叠并标注），每块都占满整列宽度；
+ * - 本周不上的安排灰显，并标出各自周次；
+ * - 同一门课在别的周次的安排，直接写在它的块里。
+ */
+function clusterEl(cluster, day) {
+  const active = cluster.items.filter((inst) => isActive(inst, state.week));
+  const inactive = cluster.items.filter((inst) => !isActive(inst, state.week));
+  const box = el('div', 'stack');
+  box.style.gridColumn = String(day + 1);
+  box.style.gridRow = `${cluster.firstRow + 1} / ${cluster.lastRow + 2}`;
+  const list = active.length ? active : inactive;
+  const limit = active.length ? 2 : 3;
+  const shown = list.slice(0, limit);
+  shown.forEach((inst) => {
+    box.append(blockEl(inst, day, {
+      ghost: !active.length,
+      conflict: active.length > 1,
+      // 只把「同一门课在别的周次」的安排写进它自己的块里，避免串课
+      otherWeeks: active.length ? inactive.filter((o) => o.name === inst.name) : [],
+    }));
+  });
+  const hidden = list.length - shown.length;
+  if (hidden > 0) box.append(el('span', 'more', `+${hidden} 门其他周`));
+  if (active.length) {
+    const foreign = inactive.filter((o) => !active.some((a) => a.name === o.name));
+    if (foreign.length) {
+      box.append(el('span', 'more', `其他周还有：${foreign.map((o) => `${o.name} ${weeksShort(o)}`).join('、')}`));
+    }
+  }
+  return box;
 }
 
 function renderOther() {
@@ -307,40 +414,69 @@ function closeSheets() {
 
 function openDetail(day, bigPeriod) {
   const period = state.schedule.periods.find((p) => p.index === bigPeriod);
-  const courses = state.schedule.courses.filter((c) => c.day === day && c.bigPeriod === bigPeriod);
   $('detail-title').textContent = `星期${WEEKDAY_SHORT[day - 1]} · ${period ? period.name : ''}`;
 
   const body = $('detail-body');
   body.innerHTML = '';
-  const list = courses.length ? courses : [null];
-  for (const course of list) {
+
+  const clusters = clusterInstances(buildDayInstances(day));
+  const cluster = clusters.find((c) => bigPeriod >= c.firstRow && bigPeriod <= c.lastRow);
+  if (!cluster) {
+    body.append(el('div', 'note', '这一格没有课程。'));
+    openSheet('sheet-detail');
+    return;
+  }
+
+  const activeCount = cluster.items.filter((inst) => isActive(inst, state.week)).length;
+  if (activeCount > 1) {
+    body.append(el('div', 'warn', `⚠ 本周这个时段有 ${activeCount} 门课重叠，请以教务系统为准`));
+  }
+
+  for (const inst of cluster.items) {
+    const isOn = isActive(inst, state.week);
     const box = el('div', 'course-detail');
-    if (!course) {
-      box.append(el('div', 'note', '这一格没有课程。'));
-      body.append(box);
-      continue;
-    }
-    const active = isActive(course, state.week);
-    const name = el('span', `name ${colorClass(course.name)}`, course.name);
-    if (!active) name.style.opacity = '.55';
+    const name = el('span', `name ${colorClass(inst.name)}`, inst.name);
+    if (!isOn) name.style.opacity = '.55';
     box.append(name);
-    if (!active) box.append(el('div', 'note', `本周不上这门课（${weeksText(course)}）`));
+    box.append(el('span', `badge${isOn ? ' on' : ''}`, isOn ? '本周上' : '本周不上'));
 
     const dl = document.createElement('dl');
     const add = (label, value) => {
       if (!value) return;
       dl.append(el('dt', '', label), el('dd', '', value));
     };
-    add('教师', course.teacher);
-    add('教室', course.room);
-    const sections = (course.sections || []).join('-');
-    add('节次', [sections ? `第 ${sections} 节` : '', period && period.time ? period.time : ''].filter(Boolean).join(' · '));
-    add('周次', weeksText(course));
-    add('备注', course.note);
+    add('教师', inst.teacher);
+    add('教室', inst.room);
+    add('节次', [sectionsText(inst), timeRangeOf(inst)].filter(Boolean).join(' · '));
+    add('周次', weeksText(inst));
+    add('备注', inst.note);
     box.append(dl);
+
+    // 同一门课在不同周次可能换时段，这里把全学期安排列出来对照
+    const slots = courseSlots(inst.name);
+    if (slots.length > 1) {
+      box.append(el('div', 'subtitle', `《${inst.name}》全学期安排`));
+      const list = el('ul', 'slots');
+      for (const slot of slots) {
+        list.append(el('li', '', `${WEEKDAY_SHORT[slot.day - 1]} ${slot.sectionsText} · ${slot.weeksText} · ${slot.room}`));
+      }
+      box.append(list);
+    }
     body.append(box);
   }
   openSheet('sheet-detail');
+}
+
+/** 某门课在整学期的所有时段（含周次与教室），用于详情页对照。 */
+function courseSlots(name) {
+  const slots = [];
+  for (let day = 1; day <= 7; day += 1) {
+    for (const inst of buildDayInstances(day)) {
+      if (inst.name !== name) continue;
+      slots.push({ day, sectionsText: sectionsText(inst), weeksText: weeksText(inst), room: inst.room });
+    }
+  }
+  return slots.sort((a, b) => a.day - b.day || a.sectionsText.localeCompare(b.sectionsText));
 }
 
 function openWeekPicker() {
