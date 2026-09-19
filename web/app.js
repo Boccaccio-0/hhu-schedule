@@ -13,6 +13,8 @@ const KEY_PASS = 'hhu.pass';
 const KEY_DATA = 'hhu.data';
 const KEY_META = 'hhu.meta';
 const KEY_START = 'hhu.startOverride';
+const KEY_CHECKED = 'hhu.checkedAt';
+const KEY_CHECKED_OK = 'hhu.checkedOk';
 
 const WEEKDAY_SHORT = ['一', '二', '三', '四', '五', '六', '日'];
 const PALETTE = 8;
@@ -79,9 +81,19 @@ function dataSources(preferRemote = true) {
   return preferRemote ? [REMOTE_DATA_URL, BUNDLED_DATA_URL] : [BUNDLED_DATA_URL, REMOTE_DATA_URL];
 }
 
+/** 记录"最后一次成功从网上取到数据"的时间，用于区分「没变化」和「没同步成功」。 */
+function markChecked(ok) {
+  if (ok) localStorage.setItem(KEY_CHECKED, new Date().toISOString());
+  localStorage.setItem(KEY_CHECKED_OK, ok ? '1' : '0');
+}
+
 async function fetchEnvelope(preferRemote = true) {
   let lastError = null;
+  let triedNetwork = false;
   for (const url of dataSources(preferRemote)) {
+    // 网页版那份同源文件就是线上数据；App 版只有 GitHub 那个地址算联网
+    const isNetworkSource = !IS_ANDROID_APP || url === REMOTE_DATA_URL;
+    if (isNetworkSource) triedNetwork = true;
     try {
       const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) {
@@ -89,11 +101,14 @@ async function fetchEnvelope(preferRemote = true) {
         error.code = response.status;
         throw error;
       }
-      return await response.json();
+      const envelope = await response.json();
+      if (isNetworkSource) markChecked(true);
+      return envelope;
     } catch (error) {
       lastError = error;  // 联网失败时自动退回下一数据源（App 内即包内自带数据）
     }
   }
+  if (triedNetwork) markChecked(false);  // 联网没成功，记录状态但保留上次成功时间
   throw lastError || new Error('无法获取课表数据');
 }
 
@@ -245,9 +260,17 @@ function renderOther() {
 function renderFooter() {
   const meta = state.meta;
   const term = state.schedule.termName || state.schedule.term || '';
-  $('footer-note').textContent = [term, meta && meta.updated ? `数据更新于 ${formatTime(meta.updated)}` : '', IS_ANDROID_APP ? 'App 版' : '']
-    .filter(Boolean)
-    .join(' · ');
+  const checked = localStorage.getItem(KEY_CHECKED);
+  const checkOk = localStorage.getItem(KEY_CHECKED_OK);
+  const parts = [term];
+  if (meta && meta.updated) parts.push(`课表更新于 ${formatTime(meta.updated)}`);
+  if (checked) {
+    parts.push(`${formatTime(checked)} 已同步${checkOk === '1' ? '' : '（联网失败，用本机数据）'}`);
+  } else if (IS_ANDROID_APP) {
+    parts.push('当前用包内数据');
+  }
+  if (IS_ANDROID_APP) parts.push('App 版');
+  $('footer-note').textContent = parts.filter(Boolean).join(' · ');
 }
 
 function el(tag, className, text) {
@@ -342,6 +365,11 @@ function openSettings() {
   const schedule = state.schedule;
   $('set-term').textContent = schedule.termName || schedule.term || '-';
   $('set-updated').textContent = state.meta && state.meta.updated ? formatTime(state.meta.updated) : '-';
+  const checked = localStorage.getItem(KEY_CHECKED);
+  const checkOk = localStorage.getItem(KEY_CHECKED_OK);
+  $('set-checked').textContent = checked
+    ? `${formatTime(checked)}${checkOk === '1' ? '' : '（上次联网失败，当前用本机缓存）'}`
+    : '本次打开尚未联网成功';
   const start = scheduleStart();
   const auto = schedule.startDate || '未知';
   $('set-start').textContent = start
