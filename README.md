@@ -77,10 +77,15 @@ GitHub Actions
 
 - **`local_update.bat` 提示 git push 失败**：国内访问 `github.com:443` 经常被重置。脚本会自动改用 GitHub API 推送（`scripts/api_push.py`），一般能成功；仍失败就过一会儿再双击一次，数据不会丢。
 - **计划任务没跑**：确认当时电脑是开机状态；被错过的任务 Windows 会在开机后自动补跑。也可以直接双击 `local_update.bat` 手动同步。
+- **同步日志天天写「课表数据没有变化」，但 GitHub 上迟迟没有新提交**：先确认本机能不能解析 GitHub 域名——
+  ```powershell
+  Resolve-DnsName github.com      # 应返回真实 IP；若是 0.0.0.0，说明被 hosts 屏蔽了
+  ```
+  某些游戏模组工具会往 `C:\Windows\System32\drivers\etc\hosts` 写 `0.0.0.0 github.com / api.github.com / codeload.github.com` 来阻止自己自动更新（实测 **XXMI Launcher** 会这么干，并留下 `# XXMI Launcher auto-update block` 注释），这会把本项目的 **git push 与 API 推送两条通道一起掐断**。用管理员权限打开 hosts，把那几行注释掉，再执行 `ipconfig /flushdns` 即可恢复。想立刻确认推送通道是否通畅，可以跑 `git push --dry-run origin main`，输出 `Everything up-to-date` 就说明通。
 - **手机提示「口令不对」**：输入的口令要和 `scripts/local_secrets.json` 里的 `passphrase` 一致。
 - **「现在是第几周」不对**：进设置用「起始前移一周 / 后移一周」校正，或核对教务系统教学周历后「恢复自动日期」。
 - **教务系统改版导致抓取失败**：`python tests/test_parse.py` 会先报错，按新页面结构更新 `scripts/hhu/parse.py` 即可；该测试也会在 GitHub 部署前自动运行。
-- **某天之后不再自动更新**：GitHub 在仓库连续 60 天没有提交时会停用工作流（会发邮件），到 Actions 页面点 *Enable workflow* 即可；本机计划任务不受影响。
+- **某天之后不再自动更新**：GitHub 对公开仓库有「连续 60 天无仓库活动即停用**定时**工作流」的策略；本项目两个工作流都由 push 触发，通常不受该策略影响。若真收到停用邮件，到 Actions 页面点 *Enable workflow* 即可；本机计划任务不受影响。
 
 ## 换一台电脑重新搭建
 
