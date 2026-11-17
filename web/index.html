@@ -20,8 +20,14 @@
     <span class="week-dates" id="week-dates"></span>
   </button>
   <button class="icon-btn" id="btn-next" type="button" aria-label="下一周">›</button>
+  <span class="plan-topbar-title" id="plan-topbar-title" hidden>每日计划</span>
   <button class="icon-btn" id="btn-settings" type="button" aria-label="设置">⚙</button>
 </header>
+
+<nav class="view-tabs" id="view-tabs" role="tablist" aria-label="查看内容" hidden>
+  <button type="button" id="tab-timetable" role="tab" aria-controls="timetable-view" aria-selected="true">课表</button>
+  <button type="button" id="tab-plan" role="tab" aria-controls="plan-view" aria-selected="false" tabindex="-1">时间安排</button>
+</nav>
 
 <main>
   <section class="gate" id="gate" hidden>
@@ -38,16 +44,73 @@
     </div>
   </section>
 
-  <section id="timetable-view" hidden>
+  <section id="timetable-view" role="tabpanel" aria-labelledby="tab-timetable" hidden>
     <div class="grid-wrap">
       <div class="grid" id="grid"></div>
     </div>
     <div class="other-courses" id="other-courses" hidden></div>
     <div class="footer-note" id="footer-note"></div>
   </section>
+
+  <section id="plan-view" class="plan-view" role="tabpanel" aria-labelledby="tab-plan" hidden>
+    <div class="plan-heading">
+      <div><h1>考研四科每日时间安排</h1><p class="note" id="plan-start-date"></p></div>
+      <button type="button" class="btn" id="btn-plan-add">新增时段</button>
+    </div>
+    <p class="note plan-local-note">修改仅保存在当前设备。课表同步不会覆盖时间安排。</p>
+    <p class="warn" id="plan-storage-error" role="alert" hidden></p>
+    <button type="button" class="btn ghost" id="btn-plan-retry" hidden>重试读取</button>
+    <p class="warn" id="plan-action-error" role="alert" hidden></p>
+    <p class="warn" id="plan-overlap" role="status" hidden></p>
+    <div class="plan-layout">
+      <div class="plan-list">
+        <table class="plan-table" aria-label="每日时间安排">
+          <thead><tr><th scope="col">时间</th><th scope="col">安排</th><th scope="col">具体任务</th><th scope="col">时长</th><th scope="col">操作</th></tr></thead>
+          <tbody id="plan-rows"></tbody>
+        </table>
+        <p class="plan-empty" id="plan-empty" hidden>暂无时间安排，点击“新增时段”开始规划。</p>
+      </div>
+      <aside class="plan-summary" aria-label="每日汇总">
+        <h2>每日汇总</h2>
+        <table class="plan-summary-table">
+          <thead><tr><th scope="col">科目</th><th scope="col">时长</th><th scope="col">学习占比</th></tr></thead>
+          <tbody id="plan-summary-rows"></tbody>
+          <tfoot><tr><th scope="row">学习合计</th><td id="plan-total"></td><td id="plan-total-share"></td></tr></tfoot>
+        </table>
+        <dl class="plan-metrics">
+          <dt>学习日跨度</dt><dd id="plan-span"></dd>
+          <dt>用餐、午休与短休</dt><dd id="plan-rest"></dd>
+          <dt>生活时间</dt><dd id="plan-life"></dd>
+        </dl>
+        <p class="note">学习日跨度：首个学习时段开始至最后一个学习时段结束，包含中间休息。</p>
+        <h2>原表备注</h2><ul class="plan-notes" id="plan-notes"></ul>
+        <p class="note">原表作息：07:00 起床，24:00 睡觉。</p>
+        <button type="button" class="btn ghost" id="btn-plan-reset">恢复原始安排</button>
+      </aside>
+    </div>
+  </section>
 </main>
 
 <div class="sheet-backdrop" id="backdrop" hidden></div>
+
+<section class="sheet plan-editor" id="sheet-plan-edit" role="dialog" aria-modal="true" aria-labelledby="plan-edit-title" hidden>
+  <div class="sheet-head">
+    <span id="plan-edit-title">编辑时间安排</span>
+    <button class="icon-btn" type="button" data-close aria-label="关闭时间安排编辑">✕</button>
+  </div>
+  <form class="sheet-body" id="plan-form" novalidate>
+    <div class="plan-time-fields">
+      <label for="plan-start">开始时间<input id="plan-start" type="text" placeholder="07:00" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="plan-time-hint" required></label>
+      <label for="plan-end">结束时间<input id="plan-end" type="text" placeholder="24:00" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="plan-time-hint" required></label>
+    </div>
+    <p class="note" id="plan-time-hint">使用 24 小时制，例如 07:30。结束时间可填 24:00。</p>
+    <label for="plan-category">安排类别<select id="plan-category" required></select></label>
+    <label for="plan-task">具体任务<textarea id="plan-task" rows="3" required></textarea></label>
+    <p class="warn" id="plan-form-overlap" role="status" hidden>此时段与已有安排重叠，仍可保存。汇总将分别累计各条时长。</p>
+    <p class="warn" id="plan-form-error" role="alert" hidden></p>
+    <div class="btn-row"><button type="button" class="btn ghost" data-close>取消</button><button type="submit" class="btn">保存安排</button></div>
+  </form>
+</section>
 
 <section class="sheet" id="sheet-detail" hidden>
   <div class="sheet-head">
@@ -95,6 +158,7 @@
       安装到桌面：用 Chrome 打开本页 → 右上角菜单 → 「安装应用 / 添加到主屏幕」，之后可离线打开。
       「课表更新于」是课表内容最后一次变化的时间（没变化就不会刷新，属正常）；「最后同步检查」是最近一次成功联网取数据的时间。
       「起始日期」只影响「现在是第几周」的计算，可从教务系统校历核对。
+      「清除本机数据」也会删除本机的时间安排修改，下次解锁后使用原始安排。
     </p>
     <p class="note" id="set-build"></p>
   </div>

@@ -37,6 +37,16 @@ jobs:
           pip install --quiet beautifulsoup4 lxml
           python tests/test_parse.py
 
+      - name: 准备 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 时间安排与浏览器解密测试
+        run: |
+          node --test tests/test_study_plan.mjs
+          node tests/node_roundtrip.mjs
+
       - name: 配置 GitHub Pages
         uses: actions/configure-pages@v5
 

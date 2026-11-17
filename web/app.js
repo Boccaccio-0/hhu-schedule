@@ -5,6 +5,9 @@
  * → 本页拉取 → 用 WebCrypto 解密 → 存 localStorage → 离线可用。
  */
 
+import { KEY_PLAN } from './study-plan.js';
+import { createPlanView } from './study-plan-view.js';
+
 // 网页版从同目录读数据；打包成 Android App 时优先从 GitHub 拉最新，失败则用包内自带的那份
 const BUNDLED_DATA_URL = 'data/schedule.enc.json';
 const REMOTE_DATA_URL = 'https://boccaccio-0.github.io/hhu-schedule/data/schedule.enc.json';
@@ -20,7 +23,9 @@ const WEEKDAY_SHORT = ['一', '二', '三', '四', '五', '六', '日'];
 const PALETTE = 8;
 const DAY_MS = 86400000;
 
-const state = { schedule: null, meta: null, week: 1, pass: '' };
+const state = { schedule: null, meta: null, week: 1, pass: '', view: 'timetable' };
+let planView;
+let sheetTrigger = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -178,11 +183,21 @@ function isActive(course, week) {
 function render() {
   $('gate').hidden = true;
   $('topbar').hidden = false;
-  $('timetable-view').hidden = false;
+  $('view-tabs').hidden = false;
+  $('timetable-view').hidden = state.view !== 'timetable';
+  $('plan-view').hidden = state.view !== 'plan';
+  for (const view of ['timetable', 'plan']) {
+    const selected = view === state.view;
+    $('tab-' + view).setAttribute('aria-selected', String(selected));
+    $('tab-' + view).tabIndex = selected ? 0 : -1;
+  }
+  for (const id of ['btn-prev', 'btn-week', 'btn-next']) $(id).hidden = state.view !== 'timetable';
+  $('plan-topbar-title').hidden = state.view !== 'plan';
   renderHeader();
   renderGrid();
   renderOther();
   renderFooter();
+  if (state.view === 'plan') planView.render();
 }
 
 function renderHeader() {
@@ -395,13 +410,21 @@ function weeksText(course) {
 /* ------------------------------------------------------------------ 弹层 */
 
 function openSheet(id) {
+  if (!$('sheet-plan-edit').hidden && id !== 'sheet-plan-edit' && !closeSheets()) return false;
+  sheetTrigger = document.activeElement;
   for (const sheet of document.querySelectorAll('.sheet')) sheet.hidden = sheet.id !== id;
   $('backdrop').hidden = false;
+  return true;
 }
 
 function closeSheets() {
+  if (planView && !planView.canClose()) return false;
   for (const sheet of document.querySelectorAll('.sheet')) sheet.hidden = true;
   $('backdrop').hidden = true;
+  if (sheetTrigger && sheetTrigger.isConnected) sheetTrigger.focus();
+  else if (state.view === 'plan') $('btn-plan-add').focus();
+  sheetTrigger = null;
+  return true;
 }
 
 function openDetail(day, bigPeriod, key) {
@@ -597,7 +620,9 @@ async function refresh({ silent = false } = {}) {
 function showGate(message = '') {
   $('gate').hidden = false;
   $('topbar').hidden = true;
+  $('view-tabs').hidden = true;
   $('timetable-view').hidden = true;
+  $('plan-view').hidden = true;
   $('gate-hint').textContent = message;
   const meta = localStorage.getItem(KEY_META);
   if (meta) {
@@ -608,6 +633,24 @@ function showGate(message = '') {
 }
 
 function bind() {
+  planView = createPlanView({ openSheet, closeSheets, toast });
+  for (const view of ['timetable', 'plan']) {
+    $('tab-' + view).addEventListener('click', () => {
+      if (!closeSheets()) return;
+      state.view = view;
+      render();
+    });
+    $('tab-' + view).addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 'timetable' : event.key === 'End' ? 'plan' : view === 'plan' ? 'timetable' : 'plan';
+      $('tab-' + next).click();
+      $('tab-' + next).focus();
+    });
+  }
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !$('backdrop').hidden) { event.preventDefault(); closeSheets(); }
+  });
   $('gate-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const input = $('gate-input');
@@ -653,8 +696,8 @@ function bind() {
     showGate('请输入当前生效的同步口令。');
   });
   $('btn-clear').addEventListener('click', () => {
-    if (!confirm('清除本机缓存的课表与口令？下次打开需要重新解锁。')) return;
-    for (const key of [KEY_PASS, KEY_DATA, KEY_META, KEY_START]) localStorage.removeItem(key);
+    if (!confirm('清除本机缓存的课表、口令和时间安排修改？下次打开需要重新解锁，时间安排将恢复原始内容。')) return;
+    for (const key of [KEY_PASS, KEY_DATA, KEY_META, KEY_START, KEY_PLAN]) localStorage.removeItem(key);
     location.reload();
   });
 
