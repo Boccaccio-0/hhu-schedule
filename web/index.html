@@ -41,6 +41,7 @@
       </form>
       <p class="gate-hint" id="gate-hint"></p>
       <p class="gate-status" id="gate-status"></p>
+      <p data-app-update hidden><a href="hhu-update://check">检查应用更新</a></p>
     </div>
   </section>
 
@@ -146,6 +147,10 @@
       <button type="button" class="btn" id="btn-refresh">立即同步</button>
       <button type="button" class="btn" id="btn-change-pass">重新输入口令</button>
     </div>
+    <div data-app-update hidden>
+      <p><a class="btn ghost app-update-link" href="hhu-update://check">检查应用更新</a></p>
+      <p class="note">有新版时可在手机上下载安装。覆盖安装会保留时间安排；课表内容使用“立即同步”更新。</p>
+    </div>
     <div class="btn-row">
       <button type="button" class="btn ghost" id="btn-start-back">起始前移一周</button>
       <button type="button" class="btn ghost" id="btn-start-fwd">起始后移一周</button>
@@ -158,8 +163,8 @@
       安装到桌面：用 Chrome 打开本页 → 右上角菜单 → 「安装应用 / 添加到主屏幕」，之后可离线打开。
       「课表更新于」是课表内容最后一次变化的时间（没变化就不会刷新，属正常）；「最后同步检查」是最近一次成功联网取数据的时间。
       「起始日期」只影响「现在是第几周」的计算，可从教务系统校历核对。
-      「清除本机数据」也会删除本机的时间安排修改，下次解锁后使用原始安排。
     </p>
+    <p class="note">「清除本机数据」也会删除本机的时间安排修改，下次解锁后使用原始安排。</p>
     <p class="note" id="set-build"></p>
   </div>
 </section>

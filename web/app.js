@@ -725,7 +725,10 @@ async function init() {
   if ('serviceWorker' in navigator && !IS_ANDROID_APP) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* 离线能力不可用不影响使用 */ });
   }
-  if (IS_ANDROID_APP) $('install-hint').hidden = true;
+  if (IS_ANDROID_APP) {
+    $('install-hint').hidden = true;
+    document.querySelectorAll('[data-app-update]').forEach((element) => { element.hidden = false; });
+  }
 
   const cached = localStorage.getItem(KEY_DATA);
   if (cached) {

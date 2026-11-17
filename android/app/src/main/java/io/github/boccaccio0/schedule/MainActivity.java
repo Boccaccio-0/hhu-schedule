@@ -2,6 +2,9 @@ package io.github.boccaccio0.schedule;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.webkit.WebResourceRequest;
@@ -9,6 +12,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import androidx.webkit.WebViewAssetLoader;
 
@@ -22,11 +26,13 @@ import androidx.webkit.WebViewAssetLoader;
 public class MainActivity extends Activity {
 
     private WebView webView;
+    private AppUpdater updater;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        updater = new AppUpdater(this);
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -46,6 +52,17 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (!request.isForMainFrame()) return true;
+                return handleNavigation(view, request.getUrl());
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleNavigation(view, Uri.parse(url));
+            }
+
+            @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return assetLoader.shouldInterceptRequest(request.getUrl());
             }
@@ -53,6 +70,30 @@ public class MainActivity extends Activity {
 
         webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html");
         setContentView(webView);
+    }
+
+    private boolean handleNavigation(WebView view, Uri uri) {
+        if ("hhu-update://check".equals(uri.toString())) {
+            if (isLocalPage(Uri.parse(view.getUrl() == null ? "" : view.getUrl()))) updater.check();
+            return true;
+        }
+        if (isLocalPage(uri)) return false;
+        if ("https".equals(uri.getScheme())) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            } catch (ActivityNotFoundException error) {
+                Toast.makeText(this, "请先安装浏览器再打开链接", Toast.LENGTH_LONG).show();
+            }
+        }
+        return true;
+    }
+
+    private static boolean isLocalPage(Uri uri) {
+        return "https".equals(uri.getScheme())
+                && "appassets.androidplatform.net".equals(uri.getHost())
+                && (uri.getPort() == -1 || uri.getPort() == 443)
+                && uri.getUserInfo() == null
+                && uri.getPath() != null && uri.getPath().startsWith("/assets/www/");
     }
 
     @Override
@@ -66,6 +107,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        updater.close();
         if (webView != null) {
             webView.destroy();
             webView = null;

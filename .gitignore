@@ -18,6 +18,10 @@ android/build/
 android/app/build/
 android/app/src/main/assets/www/
 android/local.properties
+android/signing/
+*.p12
+*.jks
+*.keystore
 
 .DS_Store
 Thumbs.db

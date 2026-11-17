@@ -15,7 +15,11 @@
 2. 下载完成后点开安装，系统会提示「**出于安全考虑，禁止安装未知应用**」——按提示允许一次（小米/华为/OPPO/vivo 一般在弹窗里的设置页打开开关，或到「设置 → 应用 → 特殊权限 → 安装未知应用」给浏览器授权）；
 3. 装好后桌面出现「课表」图标，打开输入口令即可。
 
-**更新方式**：日常课表变化不需要重装——App 打开时会自动从网上拉最新数据，拉不到就用包内自带的那一份。只有界面/功能更新时才需要重新下载安装包覆盖安装（数据不会丢）。
+**手机更新**：从 1.2 起，在「设置 → 检查应用更新」查看新版（解锁页也有入口）。发现新版后点「下载更新」，浏览器下载完成后，点开 APK 按 Android 提示安装；系统仍需要你确认安装。无网络或检查失败时可重试，或打开下载页手动下载。网页 / PWA 不显示 Android 更新入口。
+
+**首次迁移**：1.0 / 1.1 使用临时签名，升级到 1.2 需卸载旧版后再安装；卸载会清除本机修改，请先记录自定义安排。1.2 起使用固定签名，以后可覆盖安装并保留时间安排与口令。
+
+日常课表变化不需要安装新版本：App 打开时会自动同步；无法联网时仍可查看已有课表和时间安排。
 
 ## 它长什么样
 
@@ -117,6 +121,16 @@ GitHub Actions
 - 不再需要本机 git 凭据时，可在「Windows 凭据管理器 → 普通凭据 → git:https://github.com」里删除。
 
 ## 本地开发与测试
+
+### 安卓构建与发布
+
+- Actions 从仓库 Secrets 读取 `ANDROID_KEYSTORE_BASE64`（固定 PKCS12 密钥库）及 `ANDROID_KEYSTORE_PASSWORD`，别名为 `hhu-release`。缺少密钥时构建失败，不再使用随机调试签名。
+- 密钥及密码必须单独备份，不提交到 Git。更换或丢失密钥会导致已安装版本无法覆盖升级。
+- 每次发布功能更新，递增 `android/app/build.gradle` 的 `versionCode` 并更新 `versionName`。课表内容同步无需提升应用版本。
+- 工作流先运行版本解析单元测试，再构建签名 APK；从实际产物生成 `update.json`，先上传 APK 再上传版本信息。更新检查读取 GitHub Release 附件，不需要登录或 API Token，也不上传本机计划。
+- 本地使用 JDK 17、Gradle 8.7、Android SDK 34。在 `android/` 运行 `gradle testDebugUnitTest` 测试；构建 release 还需设置 `ANDROID_KEYSTORE_PATH` 和 `ANDROID_KEYSTORE_PASSWORD`，并先将 `web/` 复制到 `android/app/src/main/assets/www/`。
+
+### 网页与课表测试
 
 ```bash
 pip install -r scripts/requirements.txt
