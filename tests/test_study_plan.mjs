@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { KEY_PLAN, defaultEntries, formatMinute, parseMinute, validateEntry, sortedEntries, overlappingIds, summarize, loadPlan, savePlan } from '../web/study-plan.js';
+import { KEY_PLAN, defaultEntries, formatMinute, parseMinute, validateEntry, sortedEntries, overlappingIds, locateEntry, summarize, loadPlan, savePlan } from '../web/study-plan.js';
 
 const storage = () => {
   const values = new Map();
@@ -74,6 +74,31 @@ test('空安排可持久化，零学习时间汇总没有 NaN', () => {
     assert.equal(totals.span, 0);
     assert.ok(Object.values(totals.shares).every((share) => share === 0));
   }
+});
+
+test('定位当前时段：包含开始，不包含结束，支持 24:00 与每日重新开始', () => {
+  const entries = defaultEntries();
+  for (const entry of entries) {
+    assert.equal(locateEntry(entries, entry.start), entry);
+    assert.equal(locateEntry(entries, entry.end - 1), entry);
+  }
+  assert.equal(locateEntry(entries, 450), entries[1]);
+  assert.equal(locateEntry(entries, 1439), entries.at(-1));
+  assert.equal(locateEntry(entries, 0), entries[0]);
+});
+
+test('定位空档、结束、空列表与重叠；使用排序后的自定义安排且不改变原数组', () => {
+  const a = { id: 'a', start: 100, end: 200 };
+  const b = { id: 'b', start: 300, end: 400 };
+  const overlap = { id: 'overlap', start: 120, end: 180 };
+  const entries = [b, overlap, a];
+  assert.equal(locateEntry(entries, 50), a);
+  assert.equal(locateEntry(entries, 150), a);
+  assert.equal(locateEntry(entries, 200), b);
+  assert.equal(locateEntry(entries, 400), b);
+  assert.equal(locateEntry(entries, 1439), b);
+  assert.equal(locateEntry([], 700), null);
+  assert.equal(entries[0], b);
 });
 
 test('损坏或未知版本缓存不被覆盖，非法条目和重复 ID 被拒绝', () => {

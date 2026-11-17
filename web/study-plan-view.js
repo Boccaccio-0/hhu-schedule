@@ -1,4 +1,4 @@
-import { CATEGORIES, SUBJECTS, PLAN_NOTES, PLAN_START_DATE, defaultEntries, formatMinute, parseMinute, validateEntry, sortedEntries, overlappingIds, summarize, loadPlan, savePlan } from './study-plan.js';
+import { CATEGORIES, SUBJECTS, PLAN_NOTES, PLAN_START_DATE, defaultEntries, formatMinute, parseMinute, validateEntry, sortedEntries, overlappingIds, locateEntry, summarize, loadPlan, savePlan } from './study-plan.js';
 
 const $ = (id) => document.getElementById(id);
 const hours = (minutes) => Number((minutes / 60).toFixed(2)).toLocaleString('zh-CN');
@@ -18,6 +18,7 @@ export function createPlanView({ openSheet, closeSheets, toast }) {
   let plan = loadPlan(storage);
   let editingId = null;
   let initialForm = null;
+  const rows = new Map();
   const formValue = () => JSON.stringify(['plan-start', 'plan-end', 'plan-category', 'plan-task'].map((id) => $(id).value));
   const isDirty = () => !$('sheet-plan-edit').hidden && initialForm !== null && initialForm !== formValue();
 
@@ -37,9 +38,13 @@ export function createPlanView({ openSheet, closeSheets, toast }) {
     $('plan-overlap').textContent = `${overlaps.size} 个时段存在重叠。汇总按每条安排的时长分别累计，重叠部分会重复计入。`;
     const body = $('plan-rows');
     body.replaceChildren();
+    rows.clear();
     for (const entry of sortedEntries(plan.entries)) {
       const row = document.createElement('tr');
       const time = node('td', `${formatMinute(entry.start)}–${formatMinute(entry.end)}`, 'plan-time');
+      const currentBadge = node('span', '当前时段', 'plan-current-badge');
+      currentBadge.hidden = true;
+      time.append(currentBadge);
       if (overlaps.has(entry.id)) time.append(node('span', '时间重叠', 'plan-overlap-badge'));
       const category = node('td', '', 'plan-category');
       category.append(node('span', entry.category, `plan-tag plan-tag-${CATEGORIES.indexOf(entry.category)}`));
@@ -56,6 +61,7 @@ export function createPlanView({ openSheet, closeSheets, toast }) {
       }
       row.append(time, category, task, duration, actions);
       body.append(row);
+      rows.set(entry.id, { entry, row, currentBadge });
     }
     $('plan-empty').hidden = plan.entries.length !== 0;
     const totals = summarize(plan.entries);
@@ -71,6 +77,31 @@ export function createPlanView({ openSheet, closeSheets, toast }) {
     $('plan-span').textContent = totals.total ? `${hours(totals.span)} 小时` : '无';
     $('plan-rest').textContent = `${hours(totals.minutes['休息'])} 小时`;
     $('plan-life').textContent = `${hours(totals.minutes['生活'])} 小时`;
+    updateCurrent();
+  }
+
+  function updateCurrent() {
+    if (document.hidden || $('plan-view').hidden) return null;
+    const now = new Date();
+    const minute = now.getHours() * 60 + now.getMinutes();
+    for (const { entry, row, currentBadge } of rows.values()) {
+      const current = entry.start <= minute && minute < entry.end;
+      row.classList.toggle('plan-current', current);
+      currentBadge.hidden = !current;
+      if (current) row.setAttribute('aria-current', 'time');
+      else row.removeAttribute('aria-current');
+    }
+    return rows.get(locateEntry(plan.entries, minute)?.id)?.row;
+  }
+
+  function locateCurrent() {
+    // 等待标签切换和键盘焦点更新完成，再定位；普通重绘只更新标记。
+    requestAnimationFrame(() => {
+      const row = updateCurrent();
+      if (!row) return;
+      row.style.scrollMarginTop = `${$('app-header').getBoundingClientRect().height + 12}px`;
+      row.scrollIntoView({ block: 'start', behavior: 'auto' });
+    });
   }
 
   function persist(entries, errorTarget) {
@@ -165,5 +196,10 @@ export function createPlanView({ openSheet, closeSheets, toast }) {
   for (const category of CATEGORIES) $('plan-category').append(new Option(category, category));
   $('plan-start-date').textContent = `从 ${PLAN_START_DATE} 起执行 · 每日重复`;
   for (const text of PLAN_NOTES) $('plan-notes').append(node('li', text));
-  return { render, canClose };
+  document.addEventListener('visibilitychange', updateCurrent);
+  setTimeout(function tick() {
+    updateCurrent();
+    setTimeout(tick, 60000 - Date.now() % 60000);
+  }, 60000 - Date.now() % 60000);
+  return { render, canClose, locateCurrent };
 }

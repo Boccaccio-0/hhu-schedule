@@ -72,6 +72,14 @@ export function overlappingIds(entries) {
   return ids;
 }
 
+export function locateEntry(entries, minute) {
+  const sorted = sortedEntries(entries);
+  return sorted.find((entry) => entry.start <= minute && minute < entry.end)
+    || sorted.find((entry) => entry.start > minute)
+    || sorted[sorted.length - 1]
+    || null;
+}
+
 export function summarize(entries) {
   const minutes = Object.fromEntries(CATEGORIES.map((category) => [category, 0]));
   for (const entry of entries) minutes[entry.category] += entry.end - entry.start;

@@ -27,10 +27,13 @@ button { font-family: inherit; }
 
 /* ---------------------------------------------------------------- 顶栏 */
 
-.topbar {
+.app-header {
   position: sticky;
   top: 0;
   z-index: 20;
+}
+
+.topbar {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -522,6 +525,9 @@ ul.slots li { font-size: 12px; color: #334155; line-height: 1.75; }
 .plan-notes { padding-left: 18px; font-size: 12px; line-height: 1.8; color: var(--muted); }
 .plan-summary > .btn { width: 100%; margin-top: 20px; }
 .plan-overlap-badge { display: block; font-size: 11px; color: #b91c1c; font-weight: 400; }
+.plan-table tr.plan-current { background: var(--today); }
+.plan-current .plan-time { box-shadow: inset 3px 0 var(--accent); padding-left: 12px; }
+.plan-current-badge { display: block; width: fit-content; margin-top: 4px; padding: 1px 7px; border-radius: 4px; background: var(--accent); color: #fff; font-size: 11px; }
 .plan-editor { max-width: 600px; margin: 0 auto; }
 .plan-editor label { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; font-size: 13px; }
 .plan-time-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -542,6 +548,7 @@ ul.slots li { font-size: 12px; color: #334155; line-height: 1.75; }
   .plan-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .plan-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 16px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
   .plan-table td { display: block; border: 0; padding: 0; }
+  .plan-current .plan-time { padding-left: 10px; }
   .plan-category { text-align: right; }
   .plan-table .plan-task { grid-column: 1 / -1; }
   .plan-duration { align-self: center; }

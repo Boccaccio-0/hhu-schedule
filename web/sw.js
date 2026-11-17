@@ -3,7 +3,7 @@
  * - 页面外壳：stale-while-revalidate（先秒开缓存，再后台更新，避免长期停留旧版本）
  * - 失败响应（404 等）不写入缓存
  */
-const CACHE = 'hhu-schedule-v3';
+const CACHE = 'hhu-schedule-v4';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './study-plan.js', './study-plan-view.js', './manifest.webmanifest', './icon.svg'];
 
 const putIfOk = (request, response) => {

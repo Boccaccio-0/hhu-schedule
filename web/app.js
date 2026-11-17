@@ -639,6 +639,7 @@ function bind() {
       if (!closeSheets()) return;
       state.view = view;
       render();
+      if (view === 'plan') planView.locateCurrent();
     });
     $('tab-' + view).addEventListener('keydown', (event) => {
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
