@@ -567,6 +567,7 @@ ul.slots li { font-size: 12px; color: #334155; line-height: 1.75; }
   .icon-btn, .btn.ghost { background: #1e293b; color: #e2e8f0; }
   .gate-card input, .week-picker button { background: #0f172a; color: #e2e8f0; }
   .gate-card a { color: #93c5fd; }
+  .course-detail dd, .kv dd, ul.slots li { color: var(--text); }
   .c7 { background: #334155; color: #e2e8f0; }
   .plan-view .warn, .plan-editor .warn { background: #3b2025; color: #fecaca; }
   .plan-overlap-badge { color: #fca5a5; }
